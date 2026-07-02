@@ -23,7 +23,7 @@ final class WalletViewController: BaseViewController {
     private let products: [WalletProduct] = [
         WalletProduct(productId: "mumyizhsdfvsbpbb", amount: "400", price: "$0.99"),
         WalletProduct(productId: "uiowzrkitnxdaqvb", amount: "800", price: "$1.99"),
-        WalletProduct(productId: "kjhgfdsazxcvbnmq", amount: "1780", price: "$3.99"),
+        WalletProduct(productId: "ifhgfdsazxcvbnmq", amount: "1780", price: "$3.99"),
         WalletProduct(productId: "yggwhyexpjawrqzk", amount: "2450", price: "$4.99"),
         WalletProduct(productId: "yuoficglaacdnrci", amount: "5150", price: "$ 9.99"),
         WalletProduct(productId: "diijztiisphqpmpv", amount: "10800", price: "$19.99"),
