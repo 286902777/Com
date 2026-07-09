@@ -165,7 +165,6 @@
 				C7E37784DB4B921FA0D8D88F /* Pods-Campa.debug.xcconfig */,
 				E11BA1FA71F6A4A41A8002D0 /* Pods-Campa.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -534,9 +533,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Campa/Pods-Campa-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Campa/Pods-Campa-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -748,7 +751,7 @@
 				INFOPLIST_FILE = Campa/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.campa.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.campa.yuiopqtzjhx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -773,7 +776,7 @@
 				INFOPLIST_FILE = Campa/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.campa.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.campa.yuiopqtzjhx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
