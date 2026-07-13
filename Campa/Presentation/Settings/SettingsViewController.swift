@@ -95,6 +95,11 @@ final class SettingsViewController: BaseViewController {
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
         case 2:
+            guard let user = loadCurrentUser(), !isGuestUser(user) else {
+                showLoginAlert()
+                return
+            }
+
             let vc = WalletViewController()
             vc.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(vc, animated: true)
@@ -166,6 +171,36 @@ final class SettingsViewController: BaseViewController {
             relation: .above(deleteAccountButton.topAnchor, spacing: 18),
             accessibilityIdentifier: "settingsToastLabel"
         )
+    }
+
+    private func loadCurrentUser() -> User? {
+        if let userIdString = UserDefaults.standard.string(forKey: CurrentUserIdKey),
+           let userId = UUID(uuidString: userIdString),
+           case .success(let user) = userRepository.fetchUser(id: userId) {
+            return user
+        }
+
+        guard case .success(let user) = userRepository.fetchCurrentUser() else {
+            return nil
+        }
+        return user
+    }
+
+    private func isGuestUser(_ user: User) -> Bool {
+        if let guestUserId = UserDefaults.standard.string(forKey: GuestUserIdKey),
+           guestUserId == user.id.uuidString {
+            return true
+        }
+
+        return user.email?.lowercased().hasSuffix("@guest.campa") == true
+    }
+
+    private func showLoginAlert() {
+        guard presentedViewController == nil else {
+            return
+        }
+
+        present(LoginAlertController(), animated: false)
     }
 
     private func configureLayout() {

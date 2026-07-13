@@ -17,7 +17,6 @@ final class WalletViewController: BaseViewController {
     private let balanceLabel = UILabel()
     private let headerBackgroundImageView = UIImageView()
     private let collectionView: UICollectionView
-    private let userRepository: UserRepository
     private var selectedProductIndex = 0
     private var storeProducts: [String: StoreKit.Product] = [:]
     private let products: [WalletProduct] = [
@@ -33,8 +32,7 @@ final class WalletViewController: BaseViewController {
         WalletProduct(productId: "adlvqzvpnyfuojhc", amount: "63700", price: "$99.99"),
     ]
 
-    init(userRepository: UserRepository = UserRepository()) {
-        self.userRepository = userRepository
+    init() {
         let layout = UICollectionViewFlowLayout()
         layout.minimumLineSpacing = 14
         layout.minimumInteritemSpacing = 14
@@ -262,10 +260,6 @@ extension WalletViewController: UICollectionViewDataSource, UICollectionViewDele
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard guardRegisteredUser() else {
-            return
-        }
-
         if selectedProductIndex != indexPath.item {
             let oldIndexPath = IndexPath(item: selectedProductIndex, section: 0)
             selectedProductIndex = indexPath.item
@@ -285,46 +279,6 @@ extension WalletViewController: UICollectionViewDataSource, UICollectionViewDele
     ) -> CGSize {
         let width = floor((collectionView.bounds.width - 28) / 3)
         return CGSize(width: width, height: 90)
-    }
-}
-
-private extension WalletViewController {
-    func guardRegisteredUser() -> Bool {
-        guard let user = loadCurrentUser(), !isGuestUser(user) else {
-            showLoginAlert()
-            return false
-        }
-        return true
-    }
-
-    func loadCurrentUser() -> User? {
-        if let userIdString = UserDefaults.standard.string(forKey: CurrentUserIdKey),
-           let userId = UUID(uuidString: userIdString),
-           case .success(let user) = userRepository.fetchUser(id: userId) {
-            return user
-        }
-
-        guard case .success(let user) = userRepository.fetchCurrentUser() else {
-            return nil
-        }
-        return user
-    }
-
-    func isGuestUser(_ user: User) -> Bool {
-        if let guestUserId = UserDefaults.standard.string(forKey: GuestUserIdKey),
-           guestUserId == user.id.uuidString {
-            return true
-        }
-
-        return user.email?.lowercased().hasSuffix("@guest.campa") == true
-    }
-
-    func showLoginAlert() {
-        guard presentedViewController == nil else {
-            return
-        }
-
-        present(LoginAlertController(), animated: false)
     }
 }
 

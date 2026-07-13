@@ -319,6 +319,14 @@ final class PostViewController: BaseViewController {
     }
 
     private func showWallet() {
+        guard let userIdString = UserDefaults.standard.string(forKey: CurrentUserIdKey),
+              let userId = UUID(uuidString: userIdString),
+              case .success(let currentUser) = userRepository.fetchUser(id: userId),
+              !isGuestUser(currentUser) else {
+            showLoginAlert()
+            return
+        }
+
         let viewController = WalletViewController()
         viewController.modalPresentationStyle = .overFullScreen
         present(viewController, animated: true)
