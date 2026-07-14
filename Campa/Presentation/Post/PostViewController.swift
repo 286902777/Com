@@ -14,6 +14,8 @@ final class PostViewController: BaseViewController {
     private let placeholderLabel = UILabel()
     private let collectionView: UICollectionView
     private let boostBadgeView = UIView()
+    private let boostIconView = UIImageView()
+    private let boostAmountLabel = UILabel()
     private let hotImageView = UIImageView()
     private let boostButton = UIButton(type: .custom)
     private let boostDescriptionLabel = UILabel()
@@ -115,17 +117,26 @@ final class PostViewController: BaseViewController {
 
     private func configureBoostView() {
         boostBadgeView.translatesAutoresizingMaskIntoConstraints = false
-        boostBadgeView.layer.cornerRadius = 15
+        boostBadgeView.layer.cornerRadius = 12
+
+        boostIconView.translatesAutoresizingMaskIntoConstraints = false
+        boostIconView.image = UIImage(named: "vip_icon")
+        boostIconView.contentMode = .scaleAspectFit
+
+        boostAmountLabel.translatesAutoresizingMaskIntoConstraints = false
+        boostAmountLabel.text = "x300"
+        boostAmountLabel.textColor = Constants.darkTextColor
+        boostAmountLabel.font = AppFont.bold(size: 10)
+        boostAmountLabel.textAlignment = .center
 
         hotImageView.translatesAutoresizingMaskIntoConstraints = false
         hotImageView.image = UIImage(named: "hot")
         hotImageView.contentMode = .scaleAspectFit
+        hotImageView.layer.zPosition = 2
 
         boostButton.translatesAutoresizingMaskIntoConstraints = false
-        boostButton.setTitle("x300", for: .normal)
-        boostButton.setTitleColor(Constants.darkTextColor, for: .normal)
-        boostButton.titleLabel?.font = AppFont.bold(size: 12)
         boostButton.backgroundColor = .clear
+        boostButton.accessibilityLabel = NSLocalizedString("Boost post for 300", comment: "Post boost button accessibility label")
         boostButton.addTarget(self, action: #selector(handleBoostTapped), for: .touchUpInside)
         
         boostDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -133,10 +144,13 @@ final class PostViewController: BaseViewController {
         boostDescriptionLabel.font = AppFont.medium(size: 9)
         boostDescriptionLabel.textColor = Constants.darkTextColor
 
-        boostBadgeView.addSubview(hotImageView)
+        boostBadgeView.addSubview(boostIconView)
+        boostBadgeView.addSubview(boostAmountLabel)
         boostBadgeView.addSubview(boostButton)
         contentCardView.addSubview(boostBadgeView)
+        contentCardView.addSubview(hotImageView)
         contentCardView.addSubview(boostDescriptionLabel)
+        contentCardView.bringSubviewToFront(hotImageView)
         updateBoostState()
     }
 
@@ -198,13 +212,22 @@ final class PostViewController: BaseViewController {
 
             boostBadgeView.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 36),
             boostBadgeView.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
-            boostBadgeView.widthAnchor.constraint(equalToConstant: 82),
-            boostBadgeView.heightAnchor.constraint(equalToConstant: 30),
+            boostBadgeView.widthAnchor.constraint(equalToConstant: 66),
+            boostBadgeView.heightAnchor.constraint(equalToConstant: 24),
 
-            hotImageView.trailingAnchor.constraint(equalTo: boostBadgeView.trailingAnchor, constant: 3),
-            hotImageView.bottomAnchor.constraint(equalTo: boostBadgeView.topAnchor, constant: 20),
-            hotImageView.widthAnchor.constraint(equalToConstant: 43),
-            hotImageView.heightAnchor.constraint(equalToConstant: 43),
+            boostIconView.leadingAnchor.constraint(equalTo: boostBadgeView.leadingAnchor, constant: 8),
+            boostIconView.centerYAnchor.constraint(equalTo: boostBadgeView.centerYAnchor),
+            boostIconView.widthAnchor.constraint(equalToConstant: 18),
+            boostIconView.heightAnchor.constraint(equalToConstant: 14),
+
+            boostAmountLabel.leadingAnchor.constraint(equalTo: boostIconView.trailingAnchor, constant: 2),
+            boostAmountLabel.trailingAnchor.constraint(equalTo: boostBadgeView.trailingAnchor, constant: -8),
+            boostAmountLabel.centerYAnchor.constraint(equalTo: boostBadgeView.centerYAnchor),
+
+            hotImageView.trailingAnchor.constraint(equalTo: boostBadgeView.trailingAnchor, constant: 10),
+            hotImageView.bottomAnchor.constraint(equalTo: boostBadgeView.topAnchor, constant: 12),
+            hotImageView.widthAnchor.constraint(equalToConstant: 32),
+            hotImageView.heightAnchor.constraint(equalToConstant: 22),
 
             boostButton.topAnchor.constraint(equalTo: boostBadgeView.topAnchor),
             boostButton.leadingAnchor.constraint(equalTo: boostBadgeView.leadingAnchor),
@@ -483,7 +506,7 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
     var onRemove: (() -> Void)?
 
     private let imageView = UIImageView()
-    private let addIconView = UIImageView()
+    private let addButton = UIButton(type: .system)
     private let removeButton = UIButton(type: .system)
 
     override init(frame: CGRect) {
@@ -501,7 +524,7 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
-        addIconView.isHidden = true
+        addButton.isHidden = true
         removeButton.isHidden = true
         onRemove = nil
     }
@@ -511,12 +534,12 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
         case .photo(let image):
             imageView.image = image
             imageView.backgroundColor = .clear
-            addIconView.isHidden = true
+            addButton.isHidden = true
             removeButton.isHidden = false
         case .add:
             imageView.image = nil
             imageView.backgroundColor = .white
-            addIconView.isHidden = false
+            addButton.isHidden = false
             removeButton.isHidden = true
         }
     }
@@ -529,11 +552,12 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
         imageView.layer.cornerRadius = 10
         imageView.clipsToBounds = true
 
-        addIconView.translatesAutoresizingMaskIntoConstraints = false
-        addIconView.image = UIImage(systemName: "photo.badge.plus")
-        addIconView.tintColor = UIColor(red: 0.28, green: 0.02, blue: 0.02, alpha: 1.0)
-        addIconView.contentMode = .scaleAspectFit
-        addIconView.isHidden = true
+        addButton.translatesAutoresizingMaskIntoConstraints = false
+        addButton.setImage(UIImage(systemName: "plus"), for: .normal)
+        addButton.tintColor = UIColor(red: 0.28, green: 0.02, blue: 0.02, alpha: 1.0)
+        addButton.backgroundColor = .clear
+        addButton.isHidden = true
+        addButton.isUserInteractionEnabled = false
 
         removeButton.translatesAutoresizingMaskIntoConstraints = false
         removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
@@ -544,7 +568,7 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
         removeButton.addTarget(self, action: #selector(removeButtonTapped), for: .touchUpInside)
 
         contentView.addSubview(imageView)
-        contentView.addSubview(addIconView)
+        contentView.addSubview(addButton)
         contentView.addSubview(removeButton)
     }
 
@@ -555,10 +579,10 @@ private final class PostImageCollectionViewCell: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            addIconView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            addIconView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            addIconView.widthAnchor.constraint(equalToConstant: 24),
-            addIconView.heightAnchor.constraint(equalToConstant: 24),
+            addButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            addButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            addButton.widthAnchor.constraint(equalToConstant: 32),
+            addButton.heightAnchor.constraint(equalToConstant: 32),
 
             removeButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             removeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),

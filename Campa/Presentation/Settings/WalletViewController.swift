@@ -20,6 +20,12 @@ final class WalletViewController: BaseViewController {
     private var selectedProductIndex = 0
     private var storeProducts: [String: StoreKit.Product] = [:]
     private let products: [WalletProduct] = [
+//        WalletProduct(productId: "lvbsvhxcgcrvesor", amount: "400", price: "$0.99"), //test
+//        WalletProduct(productId: "dxismgcwewhrtezo", amount: "2450", price: "$4.99"),
+//        WalletProduct(productId: "khtxlcejaxmqcsra", amount: "5150", price: "$9.99"),
+//        WalletProduct(productId: "yadwwvxspgxwlndb", amount: "10800", price: "$19.99"),
+//        WalletProduct(productId: "qnrcuelbtiuflyky", amount: "29400", price: "$49.99"),
+//        WalletProduct(productId: "ymohxnvpkqxutvab", amount: "63700", price: "$99.99"),//test
         WalletProduct(productId: "mumyizhsdfvsbpbb", amount: "400", price: "$0.99"),
         WalletProduct(productId: "uiowzrkitnxdaqvb", amount: "800", price: "$1.99"),
         WalletProduct(productId: "ifhgfdsazxcvbnmq", amount: "1780", price: "$3.99"),
