@@ -17,7 +17,8 @@ final class PostViewController: BaseViewController {
     private let boostIconView = UIImageView()
     private let boostAmountLabel = UILabel()
     private let hotImageView = UIImageView()
-    private let boostButton = UIButton(type: .custom)
+    private let yesBoostButton = UIButton(type: .custom)
+    private let noBoostButton = UIButton(type: .custom)
     private let boostDescriptionLabel = UILabel()
     private let locationIconView = UIImageView()
     private let locationLabel = UILabel()
@@ -27,7 +28,7 @@ final class PostViewController: BaseViewController {
 
     private var selectedImages: [UIImage] = []
     private var collH: CGFloat = 0
-    private var isBoostSelected = false {
+    private var isBoostSelected = true {
         didSet {
             updateBoostState()
         }
@@ -134,10 +135,13 @@ final class PostViewController: BaseViewController {
         hotImageView.contentMode = .scaleAspectFit
         hotImageView.layer.zPosition = 2
 
-        boostButton.translatesAutoresizingMaskIntoConstraints = false
-        boostButton.backgroundColor = .clear
-        boostButton.accessibilityLabel = NSLocalizedString("Boost post for 300", comment: "Post boost button accessibility label")
-        boostButton.addTarget(self, action: #selector(handleBoostTapped), for: .touchUpInside)
+        configureBoostOptionButton(yesBoostButton, title: "Yes")
+        yesBoostButton.accessibilityLabel = NSLocalizedString("Boost post", comment: "Post boost yes button accessibility label")
+        yesBoostButton.addTarget(self, action: #selector(handleYesBoostTapped), for: .touchUpInside)
+
+        configureBoostOptionButton(noBoostButton, title: "No")
+        noBoostButton.accessibilityLabel = NSLocalizedString("Do not boost post", comment: "Post boost no button accessibility label")
+        noBoostButton.addTarget(self, action: #selector(handleNoBoostTapped), for: .touchUpInside)
         
         boostDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         boostDescriptionLabel.text = NSLocalizedString("Want to increase the visibility of your post?", comment: "Post boost description")
@@ -146,12 +150,24 @@ final class PostViewController: BaseViewController {
 
         boostBadgeView.addSubview(boostIconView)
         boostBadgeView.addSubview(boostAmountLabel)
-        boostBadgeView.addSubview(boostButton)
         contentCardView.addSubview(boostBadgeView)
         contentCardView.addSubview(hotImageView)
         contentCardView.addSubview(boostDescriptionLabel)
+        contentCardView.addSubview(yesBoostButton)
+        contentCardView.addSubview(noBoostButton)
+        contentCardView.bringSubviewToFront(boostBadgeView)
         contentCardView.bringSubviewToFront(hotImageView)
         updateBoostState()
+    }
+
+    private func configureBoostOptionButton(_ button: UIButton, title: String) {
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setBackgroundImage(UIImage(named: "post_no"), for: .normal)
+        button.setBackgroundImage(UIImage(named: "post_yes"), for: .selected)
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(Constants.darkTextColor, for: .normal)
+        button.titleLabel?.font = AppFont.medium(size: 12)
+        button.backgroundColor = .clear
     }
 
     private func configureLocation() {
@@ -210,8 +226,22 @@ final class PostViewController: BaseViewController {
             collectionView.trailingAnchor.constraint(equalTo: textView.trailingAnchor),
             collectionView.heightAnchor.constraint(equalToConstant: self.collH),
 
-            boostBadgeView.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 36),
-            boostBadgeView.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
+            boostDescriptionLabel.topAnchor.constraint(equalTo: collectionView.bottomAnchor, constant: 24),
+            boostDescriptionLabel.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
+            boostDescriptionLabel.trailingAnchor.constraint(lessThanOrEqualTo: textView.trailingAnchor),
+
+            yesBoostButton.topAnchor.constraint(equalTo: boostDescriptionLabel.bottomAnchor, constant: 44),
+            yesBoostButton.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
+            yesBoostButton.widthAnchor.constraint(equalToConstant: 88),
+            yesBoostButton.heightAnchor.constraint(equalToConstant: 31),
+
+            noBoostButton.centerYAnchor.constraint(equalTo: yesBoostButton.centerYAnchor),
+            noBoostButton.leadingAnchor.constraint(equalTo: yesBoostButton.trailingAnchor, constant: 44),
+            noBoostButton.widthAnchor.constraint(equalToConstant: 88),
+            noBoostButton.heightAnchor.constraint(equalTo: yesBoostButton.heightAnchor),
+
+            boostBadgeView.centerXAnchor.constraint(equalTo: yesBoostButton.centerXAnchor, constant: 26),
+            boostBadgeView.bottomAnchor.constraint(equalTo: yesBoostButton.topAnchor, constant: 13),
             boostBadgeView.widthAnchor.constraint(equalToConstant: 66),
             boostBadgeView.heightAnchor.constraint(equalToConstant: 24),
 
@@ -228,15 +258,6 @@ final class PostViewController: BaseViewController {
             hotImageView.bottomAnchor.constraint(equalTo: boostBadgeView.topAnchor, constant: 12),
             hotImageView.widthAnchor.constraint(equalToConstant: 32),
             hotImageView.heightAnchor.constraint(equalToConstant: 22),
-
-            boostButton.topAnchor.constraint(equalTo: boostBadgeView.topAnchor),
-            boostButton.leadingAnchor.constraint(equalTo: boostBadgeView.leadingAnchor),
-            boostButton.trailingAnchor.constraint(equalTo: boostBadgeView.trailingAnchor),
-            boostButton.bottomAnchor.constraint(equalTo: boostBadgeView.bottomAnchor),
-
-            boostDescriptionLabel.topAnchor.constraint(equalTo: boostBadgeView.bottomAnchor, constant: 10),
-            boostDescriptionLabel.leadingAnchor.constraint(equalTo: textView.leadingAnchor),
-            boostDescriptionLabel.trailingAnchor.constraint(lessThanOrEqualTo: textView.trailingAnchor),
 
             locationIconView.topAnchor.constraint(equalTo: contentCardView.bottomAnchor, constant: 22),
             locationIconView.leadingAnchor.constraint(equalTo: contentCardView.leadingAnchor),
@@ -325,12 +346,17 @@ final class PostViewController: BaseViewController {
         }
     }
 
-    @objc private func handleBoostTapped() {
-        isBoostSelected.toggle()
+    @objc private func handleYesBoostTapped() {
+        isBoostSelected = true
+    }
+
+    @objc private func handleNoBoostTapped() {
+        isBoostSelected = false
     }
 
     private func updateBoostState() {
-        boostButton.isSelected = isBoostSelected
+        yesBoostButton.isSelected = isBoostSelected
+        noBoostButton.isSelected = !isBoostSelected
         boostBadgeView.backgroundColor = isBoostSelected
             ? UIColor(red: 0.87, green: 0.90, blue: 0.12, alpha: 1.0)
             : .white
