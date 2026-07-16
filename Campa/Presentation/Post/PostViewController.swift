@@ -296,12 +296,43 @@ final class PostViewController: BaseViewController {
             return
         }
 
-        let walletKey = makeWalletKey(for: currentUser)
         let shouldBoostPost = isBoostSelected
         if shouldBoostPost {
+            let walletKey = makeWalletKey(for: currentUser)
             guard WalletKeychainStore.balance(for: walletKey) >= Constants.publishCost else {
-                showToast(message: NSLocalizedString("Insufficient balance", comment: "Post insufficient wallet balance toast"))
-                showWallet()
+                showInsufficientBalanceAlert()
+                return
+            }
+
+            showBoostPayAlert { [weak self] in
+                self?.publishPost(
+                    content: content,
+                    addressText: addressText,
+                    currentUser: currentUser,
+                    shouldBoostPost: true
+                )
+            }
+            return
+        }
+
+        publishPost(
+            content: content,
+            addressText: addressText,
+            currentUser: currentUser,
+            shouldBoostPost: false
+        )
+    }
+
+    private func publishPost(
+        content: String,
+        addressText: String,
+        currentUser: User,
+        shouldBoostPost: Bool
+    ) {
+        let walletKey = makeWalletKey(for: currentUser)
+        if shouldBoostPost {
+            guard WalletKeychainStore.balance(for: walletKey) >= Constants.publishCost else {
+                showInsufficientBalanceAlert()
                 return
             }
         }
@@ -315,8 +346,7 @@ final class PostViewController: BaseViewController {
         var didDeductBoostCost = false
         if shouldBoostPost {
             guard WalletKeychainStore.deduct(Constants.publishCost, for: walletKey) else {
-                showToast(message: NSLocalizedString("Insufficient balance", comment: "Post insufficient wallet balance toast"))
-                showWallet()
+                showInsufficientBalanceAlert()
                 return
             }
             didDeductBoostCost = true
@@ -344,6 +374,37 @@ final class PostViewController: BaseViewController {
             }
             showToast(message: NSLocalizedString("Failed to publish post", comment: "Post publish failed toast"))
         }
+    }
+
+    private func showBoostPayAlert(onSure: @escaping () -> Void) {
+        guard presentedViewController == nil else {
+            return
+        }
+
+        let viewController = PayAlertController()
+        viewController.modalPresentationStyle = .overFullScreen
+        viewController.configure(
+            type: .normal,
+            message: NSLocalizedString(
+                "Are you sure you want to spend 300 gold coins to increase the exposure of your post?",
+                comment: "Post boost payment confirmation message"
+            ),
+            actionHandler: onSure
+        )
+        present(viewController, animated: false)
+    }
+
+    private func showInsufficientBalanceAlert() {
+        guard presentedViewController == nil else {
+            return
+        }
+
+        let viewController = PayAlertController()
+        viewController.modalPresentationStyle = .overFullScreen
+        viewController.configure(type: .fail) { [weak self] in
+            self?.showWallet()
+        }
+        present(viewController, animated: false)
     }
 
     @objc private func handleYesBoostTapped() {

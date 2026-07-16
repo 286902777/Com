@@ -79,6 +79,14 @@ class PayAlertController: UIViewController {
     // 按钮点击回调
     private var actionHandler: (() -> Void)?
     var type: PayType = .normal
+    private var messageText: String?
+
+    func configure(type: PayType = .normal, message: String? = nil, actionHandler: (() -> Void)? = nil) {
+        self.type = type
+        self.messageText = message
+        self.actionHandler = actionHandler
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -138,16 +146,22 @@ class PayAlertController: UIViewController {
             self.hotImgV.image = UIImage(named: "hot")
             self.sureButton.setTitle("Sure", for: .normal)
             self.cancelButton.setTitle("Cancel", for: .normal)
+            self.messageLabel.text = messageText ?? "Are you sure you want to spend 300 gold coins to increase the exposure of your post?"
         } else {
             self.hotImgV.image = UIImage(named: "un_hot")
             self.sureButton.setTitle("Recharge", for: .normal)
             self.cancelButton.setTitle("Cancel", for: .normal)
+            if let messageText {
+                self.messageLabel.text = messageText
+            }
         }
     }
     
     @objc func clickSureAction() {
-        self.actionHandler?()
-        self.dismiss(animated: false)
+        let actionHandler = actionHandler
+        self.dismiss(animated: false) {
+            actionHandler?()
+        }
     }
     
     @objc func clickCancelAction() {
