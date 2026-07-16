@@ -35,7 +35,6 @@ class PayAlertController: UIViewController {
     
     private let hotImgV: UIImageView = {
         let view = UIImageView()
-        view.image = UIImage(named: "hot")
         return view
     }()
     
@@ -111,12 +110,12 @@ class PayAlertController: UIViewController {
             make.right.equalTo(-6)
         }
         hotImgV.snp.makeConstraints { make in
-            make.left.equalTo(32)
-            make.top.equalToSuperview()
-            make.size.equalTo(CGSize(width: 91, height: 91))
+            make.left.equalTo(72)
+            make.top.equalTo(32)
+            make.size.equalTo(CGSize(width: 52, height: 52))
         }
         numL.snp.makeConstraints { make in
-            make.top.equalTo(42)
+            make.centerY.equalTo(hotImgV)
             make.left.equalTo(hotImgV.snp.right)
         }
         
@@ -143,12 +142,12 @@ class PayAlertController: UIViewController {
         sureButton.addTarget(self, action: #selector(clickSureAction), for: .touchUpInside)
         cancelButton.addTarget(self, action: #selector(clickCancelAction), for: .touchUpInside)
         if self.type == .normal {
-            self.hotImgV.image = UIImage(named: "hot")
+            self.hotImgV.image = UIImage(named: "vip_icon")
             self.sureButton.setTitle("Sure", for: .normal)
             self.cancelButton.setTitle("Cancel", for: .normal)
-            self.messageLabel.text = messageText ?? "Are you sure you want to spend 300 gold coins to increase the exposure of your post?"
+            self.messageLabel.text = "Are you sure you want to spend 300 diamonds to increase the exposure of your post?"
         } else {
-            self.hotImgV.image = UIImage(named: "un_hot")
+            self.hotImgV.image = UIImage(named: "vip_icon")
             self.sureButton.setTitle("Recharge", for: .normal)
             self.cancelButton.setTitle("Cancel", for: .normal)
             if let messageText {

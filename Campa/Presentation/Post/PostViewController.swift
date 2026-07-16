@@ -145,7 +145,7 @@ final class PostViewController: BaseViewController {
         
         boostDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         boostDescriptionLabel.text = NSLocalizedString("Want to increase the visibility of your post?", comment: "Post boost description")
-        boostDescriptionLabel.font = AppFont.medium(size: 9)
+        boostDescriptionLabel.font = AppFont.medium(size: 11)
         boostDescriptionLabel.textColor = Constants.darkTextColor
 
         boostBadgeView.addSubview(boostIconView)
@@ -385,10 +385,7 @@ final class PostViewController: BaseViewController {
         viewController.modalPresentationStyle = .overFullScreen
         viewController.configure(
             type: .normal,
-            message: NSLocalizedString(
-                "Are you sure you want to spend 300 gold coins to increase the exposure of your post?",
-                comment: "Post boost payment confirmation message"
-            ),
+            message: "",
             actionHandler: onSure
         )
         present(viewController, animated: false)
