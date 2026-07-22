@@ -1,11 +1,25 @@
 import AuthenticationServices
 import UIKit
 
+private enum AuthAgreementSelectionStore {
+    private static let selectedKey = "authAgreementSelected"
+
+    static var isSelected: Bool {
+        UserDefaults.standard.bool(forKey: selectedKey)
+    }
+
+    static func setSelected(_ isSelected: Bool) {
+        UserDefaults.standard.set(isSelected, forKey: selectedKey)
+    }
+}
+
 final class AuthEntryViewController: UIViewController {
     private enum Constants {
         static let horizontalInset: CGFloat = 48
         static let primaryButtonHeight: CGFloat = 56
         static let logoSize: CGFloat = 74
+        static let appleEmailKeyPrefix = "appleAccount.email."
+        static let appleNameKeyPrefix = "appleAccount.name."
     }
 
     private let viewModel: AuthEntryViewModel
@@ -26,7 +40,7 @@ final class AuthEntryViewController: UIViewController {
     private let userAgreementText = NSLocalizedString("User Agreement", comment: "User agreement link")
     private let privacyPolicyText = NSLocalizedString("Privacy Policy", comment: "Privacy policy link")
     private let signUpText = NSLocalizedString("Sign up", comment: "Sign up link")
-    private var isAgreementSelected = false
+    private var isAgreementSelected = AuthAgreementSelectionStore.isSelected
     private let userRepository: UserRepository
 
     init(viewModel: AuthEntryViewModel = AuthEntryViewModel(), userRepository: UserRepository = UserRepository()) {
@@ -165,6 +179,7 @@ final class AuthEntryViewController: UIViewController {
         agreementButton.setImage(UIImage(named: "select"), for: .selected)
         agreementButton.imageView?.contentMode = .scaleAspectFit
         agreementButton.accessibilityIdentifier = "agreementButton"
+        agreementButton.isSelected = isAgreementSelected
         agreementButton.addTarget(self, action: #selector(handleAgreementButtonTapped), for: .touchUpInside)
 
         agreementLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -254,6 +269,7 @@ final class AuthEntryViewController: UIViewController {
     @objc private func handleAgreementButtonTapped() {
         isAgreementSelected.toggle()
         agreementButton.isSelected = isAgreementSelected
+        AuthAgreementSelectionStore.setSelected(isAgreementSelected)
     }
 
     @objc private func handleAgreementLabelTapped(_ gesture: UITapGestureRecognizer) {
@@ -446,12 +462,113 @@ extension AuthEntryViewController: ASAuthorizationControllerDelegate, ASAuthoriz
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
             return
         }
-        
-        UserDefaults.standard.set(credential.user, forKey: CurrentUserIdKey)
-        AppLoading.show(in: self.view) { [weak self] in
-            guard let self = self else { return }
-            self.switchToMainTabBarController()
+
+        let defaults = UserDefaults.standard
+        if loginExistingAppleUser(identifier: credential.user) {
+            return
         }
+
+        let emailKey = Constants.appleEmailKeyPrefix + credential.user
+        let nameKey = Constants.appleNameKeyPrefix + credential.user
+        let trimmedCredentialEmail = credential.email?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCredentialName = credential.fullName.map {
+            PersonNameComponentsFormatter().string(from: $0)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let credentialEmail = trimmedCredentialEmail.flatMap { $0.isEmpty ? nil : $0 }
+        let credentialName = trimmedCredentialName.flatMap { $0.isEmpty ? nil : $0 }
+        let tokenEmail = emailClaim(from: credential.identityToken)
+
+        if let credentialName {
+            defaults.set(credentialName, forKey: nameKey)
+        }
+
+        let email = credentialEmail ?? tokenEmail ?? defaults.string(forKey: emailKey)
+        let nickname = credentialName ?? defaults.string(forKey: nameKey)
+        guard let email, !email.isEmpty else {
+            showToast(message: NSLocalizedString("Apple login failed", comment: "Apple login missing email toast"))
+            return
+        }
+        defaults.set(email, forKey: emailKey)
+
+        if loginExistingAppleUser(email: email, identifier: credential.user) {
+            return
+        }
+
+        let draft = SignUpRegistrationDraft(
+            email: email,
+            passwordHash: nil,
+            suggestedNickname: nickname,
+            appleUserIdentifier: credential.user
+        )
+        navigationController?.pushViewController(
+            PersonalInfoViewController(registrationDraft: draft),
+            animated: true
+        )
+    }
+
+    private func loginExistingAppleUser(identifier: String) -> Bool {
+        let defaults = UserDefaults.standard
+        let userIdKey = AppleAccountDefaults.userIdKey(for: identifier)
+        guard let userIdString = defaults.string(forKey: userIdKey),
+              let userId = UUID(uuidString: userIdString),
+              case .success(let user) = userRepository.fetchUser(id: userId),
+              case .success(let activatedUser) = userRepository.activateUser(user) else {
+            return false
+        }
+
+        finishAppleLogin(with: activatedUser)
+        return true
+    }
+
+    private func loginExistingAppleUser(email: String, identifier: String) -> Bool {
+        guard case .success(let user) = userRepository.fetchUser(email: email),
+              user.passwordHash == nil,
+              case .success(let activatedUser) = userRepository.activateUser(user) else {
+            return false
+        }
+
+        UserDefaults.standard.set(
+            activatedUser.id.uuidString,
+            forKey: AppleAccountDefaults.userIdKey(for: identifier)
+        )
+        finishAppleLogin(with: activatedUser)
+        return true
+    }
+
+    private func finishAppleLogin(with user: User) {
+        UserDefaults.standard.set(user.id.uuidString, forKey: CurrentUserIdKey)
+        AppLoading.show(in: view) { [weak self] in
+            self?.switchToMainTabBarController()
+        }
+    }
+
+    private func emailClaim(from identityToken: Data?) -> String? {
+        guard let identityToken,
+              let token = String(data: identityToken, encoding: .utf8) else {
+            return nil
+        }
+
+        let segments = token.split(separator: ".")
+        guard segments.count > 1 else {
+            return nil
+        }
+
+        var payload = String(segments[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let paddingLength = (4 - payload.count % 4) % 4
+        payload += String(repeating: "=", count: paddingLength)
+
+        guard let payloadData = Data(base64Encoded: payload),
+              let object = try? JSONSerialization.jsonObject(with: payloadData),
+              let json = object as? [String: Any],
+              let email = json["email"] as? String else {
+            return nil
+        }
+
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedEmail.isEmpty ? nil : trimmedEmail
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {

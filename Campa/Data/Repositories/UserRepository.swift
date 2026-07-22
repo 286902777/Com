@@ -60,7 +60,7 @@ final class UserRepository {
 
     func createRegisteredCurrentUser(
         email: String,
-        passwordHash: String,
+        passwordHash: String?,
         nickname: String,
         birthday: Date?,
         location: String?,
@@ -114,6 +114,26 @@ final class UserRepository {
         let request = User.fetchRequest()
         request.fetchLimit = 1
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+
+        do {
+            guard let user = try context.fetch(request).first else {
+                return .failure(.missingCurrentUser)
+            }
+            return .success(user)
+        } catch {
+            return .failure(.coreDataSaveFailed)
+        }
+    }
+
+    func fetchUser(email: String) -> Result<User, PersistenceError> {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !trimmedEmail.isEmpty else {
+            return .failure(.missingCurrentUser)
+        }
+
+        let request = User.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "email ==[c] %@", trimmedEmail)
 
         do {
             guard let user = try context.fetch(request).first else {

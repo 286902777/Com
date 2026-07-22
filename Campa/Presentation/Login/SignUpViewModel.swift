@@ -3,7 +3,21 @@ import Foundation
 
 struct SignUpRegistrationDraft {
     let email: String
-    let passwordHash: String
+    let passwordHash: String?
+    let suggestedNickname: String?
+    let appleUserIdentifier: String?
+
+    init(
+        email: String,
+        passwordHash: String?,
+        suggestedNickname: String? = nil,
+        appleUserIdentifier: String? = nil
+    ) {
+        self.email = email
+        self.passwordHash = passwordHash
+        self.suggestedNickname = suggestedNickname
+        self.appleUserIdentifier = appleUserIdentifier
+    }
 }
 
 enum SignUpValidationError: Error, Equatable {

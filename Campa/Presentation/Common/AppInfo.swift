@@ -10,6 +10,14 @@ import Foundation
 let CurrentUserIdKey = "currentUserId"
 let GuestUserIdKey = "guestUserId"
 
+enum AppleAccountDefaults {
+    private static let userIdKeyPrefix = "appleAccount.userID."
+
+    static func userIdKey(for appleUserIdentifier: String) -> String {
+        userIdKeyPrefix + appleUserIdentifier
+    }
+}
+
 extension Notification.Name {
     static let postDidPublish = Notification.Name("postDidPublish")
     static let activityDidPublish = Notification.Name("activityDidPublish")

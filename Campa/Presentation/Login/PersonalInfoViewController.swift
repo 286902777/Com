@@ -67,6 +67,7 @@ final class PersonalInfoViewController: BaseViewController {
         configureSaveButton()
         configureLayout()
         updateGenderButtons()
+        nameField.text = registrationDraft?.suggestedNickname
     }
 
     private func configureFormatter() {
@@ -368,6 +369,12 @@ final class PersonalInfoViewController: BaseViewController {
         case .success(let user):
             AppLoading.show(in: self.view) { [weak self] in
                 guard let self = self else { return }
+                if let appleUserIdentifier = registrationDraft.appleUserIdentifier {
+                    UserDefaults.standard.set(
+                        user.id.uuidString,
+                        forKey: AppleAccountDefaults.userIdKey(for: appleUserIdentifier)
+                    )
+                }
                 UserDefaults.standard.set(user.id.uuidString, forKey: CurrentUserIdKey)
                 self.switchToMainTabBarController()
             }
